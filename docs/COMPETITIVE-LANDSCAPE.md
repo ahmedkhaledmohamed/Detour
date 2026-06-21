@@ -159,7 +159,7 @@
 | Roadtrippers | 30M+ POIs | No | No | Distance only | Trip only | All | $36-60/yr |
 | On The Way | Attractions | Yes (filter) | No | Yes (time) | Trip only | iOS/Android | $5/mo |
 | iExit | Exit amenities | No | No | No | Daily (highway) | All | $2 |
-| **On The Run** | **All categories** | **Yes (primary)** | **Yes (default)** | **Yes (time slider)** | **Both** | **iOS first** | **Freemium** |
+| **Detour** | **All categories** | **Yes (primary)** | **Yes (default)** | **Yes (time slider)** | **Both** | **iOS first** | **Freemium** |
 
 ---
 

@@ -1,4 +1,4 @@
-# On The Run
+# Detour
 
 Find places along your route, ranked by how little time they add.
 
@@ -6,7 +6,7 @@ Enter origin, destination, and what you're looking for — coffee, dinner pickup
 
 ## The Problem
 
-Google Maps shows you what's nearby. We show you what's worth the detour.
+Google Maps shows you what's nearby. Detour shows you what's worth the stop.
 
 No existing app makes detour time the primary ranking across all POI categories. Google Maps has "search along route" but buries it, doesn't sort by detour time, and has no max-detour filter. Waze limits you to one stop and shows results behind you. Apple Maps has no route-aware search at all.
 
