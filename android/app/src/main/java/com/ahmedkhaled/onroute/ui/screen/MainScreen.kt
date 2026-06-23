@@ -18,8 +18,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ahmedkhaled.onroute.service.NavigationService
 import com.ahmedkhaled.onroute.ui.component.*
 import com.ahmedkhaled.onroute.viewmodel.RouteViewModel
+import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -83,26 +85,57 @@ fun MainScreen(viewModel: RouteViewModel = viewModel()) {
                 cameraPositionState = cameraPositionState,
                 uiSettings = MapUiSettings(zoomControlsEnabled = false)
             ) {
+                val hasDetour = viewModel.detourRoutePoints.isNotEmpty()
+
                 if (viewModel.routePoints.isNotEmpty()) {
                     Polyline(
                         points = viewModel.routePoints,
-                        color = Color(0xFF2196F3),
+                        color = Color(0xFF2196F3).copy(alpha = if (hasDetour) 0.3f else 1f),
                         width = 12f
                     )
                 }
 
+                if (hasDetour) {
+                    Polyline(
+                        points = viewModel.detourRoutePoints,
+                        color = Color(0xFFFF9800),
+                        width = 12f
+                    )
+                }
+
+                // A/B/C waypoint markers when POI selected
+                if (viewModel.selectedPOI != null) {
+                    viewModel.originLatLng?.let { origin ->
+                        MarkerInfoWindow(state = MarkerState(position = origin)) {
+                            WaypointMarker("A", Color(0xFF4CAF50), "Start")
+                        }
+                    }
+                    viewModel.selectedPOI?.let { poi ->
+                        MarkerInfoWindow(state = MarkerState(position = poi.latLng)) {
+                            WaypointMarker("B", Color(0xFFFF9800), poi.name)
+                        }
+                    }
+                    viewModel.destinationLatLng?.let { dest ->
+                        MarkerInfoWindow(state = MarkerState(position = dest)) {
+                            WaypointMarker("C", Color(0xFFF44336), "End")
+                        }
+                    }
+                }
+
                 viewModel.filteredResults.forEach { poi ->
                     val isSelected = viewModel.selectedPOI == poi
-                    MarkerInfoWindow(
-                        state = MarkerState(position = poi.latLng),
-                        title = poi.name,
-                        alpha = if (viewModel.selectedPOI != null && !isSelected) 0.3f else 1.0f,
-                        onClick = {
-                            viewModel.selectedPOI = poi
-                            false
+                    if (!isSelected) {
+                        MarkerInfoWindow(
+                            state = MarkerState(position = poi.latLng),
+                            title = poi.name,
+                            alpha = if (viewModel.selectedPOI != null) 0.2f else 1.0f,
+                            onClick = {
+                                viewModel.selectPOI(poi)
+                                false
+                            }
+                        ) {
+                            DetourBadge(poi = poi)
                         }
-                    ) {
-                        DetourBadge(poi = poi)
                     }
                 }
             }
@@ -178,6 +211,7 @@ fun MainScreen(viewModel: RouteViewModel = viewModel()) {
 
 @Composable
 private fun ResultsSheet(viewModel: RouteViewModel) {
+    val context = LocalContext.current
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             "${viewModel.filteredResults.size} places found",
@@ -216,9 +250,13 @@ private fun ResultsSheet(viewModel: RouteViewModel) {
                     POIResultRow(
                         poi = poi,
                         isSelected = viewModel.selectedPOI == poi,
-                        onTap = { viewModel.selectedPOI = poi },
+                        onTap = { viewModel.selectPOI(poi) },
                         onNavigate = {
-                            // Navigation handoff comes in Step 7
+                            NavigationService.openGoogleMaps(
+                                context, poi,
+                                viewModel.originName,
+                                viewModel.destinationName
+                            )
                         }
                     )
                     HorizontalDivider(modifier = Modifier.padding(start = 16.dp))

@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ahmedkhaled.onroute.model.*
 import com.ahmedkhaled.onroute.service.ApiService
+import com.ahmedkhaled.onroute.service.DirectionsService
 import com.ahmedkhaled.onroute.service.LocationService
 import com.ahmedkhaled.onroute.service.PlaceAutocompleteService
 import com.ahmedkhaled.onroute.service.PlaceSuggestion
@@ -54,6 +55,8 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
     var poiResults by mutableStateOf<List<POIResult>>(emptyList())
         private set
     var selectedPOI by mutableStateOf<POIResult?>(null)
+    var detourRoutePoints by mutableStateOf<List<LatLng>>(emptyList())
+        private set
     var isLoading by mutableStateOf(false)
         private set
     var errorMessage by mutableStateOf<String?>(null)
@@ -72,6 +75,7 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
     private val placesService = PlaceAutocompleteService(Places.createClient(application))
     val locationService = LocationService(application)
     private val apiService = ApiService.create()
+    private val directionsService = DirectionsService()
 
     private var originDebounceJob: Job? = null
     private var destinationDebounceJob: Job? = null
@@ -180,6 +184,24 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
         destinationQuery = tmpQuery
         destinationLatLng = tmpLatLng
         destinationName = tmpName
+    }
+
+    fun selectPOI(poi: POIResult) {
+        selectedPOI = poi
+        val origin = originLatLng ?: return
+        val destination = destinationLatLng ?: return
+
+        viewModelScope.launch {
+            val detour = directionsService.getDetourRoute(origin, poi.latLng, destination)
+            if (detour != null) {
+                detourRoutePoints = detour.points
+            }
+        }
+    }
+
+    fun clearDetour() {
+        selectedPOI = null
+        detourRoutePoints = emptyList()
     }
 
     fun clearOrigin() {
