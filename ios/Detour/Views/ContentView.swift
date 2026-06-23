@@ -275,6 +275,14 @@ struct ContentView: View {
             .navigationTitle("\(viewModel.filteredResults.count) places found")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        sendFeedback()
+                    } label: {
+                        Image(systemName: "envelope")
+                            .font(.system(size: 14))
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         showResults = false
@@ -393,6 +401,18 @@ struct ContentView: View {
         }
         .padding(12)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    // MARK: - Feedback
+
+    private func sendFeedback() {
+        let subject = "Detour Beta Feedback"
+        let body = "\n\n---\nDetour v1.0.0 (iOS \(UIDevice.current.systemVersion))"
+        let mailto = "mailto:ahmed.khaled.a.mohamed@gmail.com?subject=\(subject)&body=\(body)"
+            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let url = URL(string: mailto) {
+            UIApplication.shared.open(url)
+        }
     }
 
     // MARK: - Map Fit
