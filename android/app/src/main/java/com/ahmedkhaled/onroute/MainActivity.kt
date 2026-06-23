@@ -11,12 +11,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
+import com.ahmedkhaled.onroute.ui.screen.MainScreen
 import com.ahmedkhaled.onroute.ui.screen.OnboardingScreen
 import com.ahmedkhaled.onroute.ui.theme.OnRouteTheme
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -59,19 +56,6 @@ fun OnRouteRoot() {
                 }
             }
         )
-        true -> MainMap()
+        true -> MainScreen()
     }
-}
-
-@Composable
-fun MainMap() {
-    val toronto = LatLng(43.6532, -79.3832)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(toronto, 12f)
-    }
-
-    GoogleMap(
-        modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState
-    )
 }
