@@ -27,7 +27,7 @@ fun CategoryBar(
                 onClick = { onCategorySelected(category) },
                 label = { Text(category.label, fontSize = 12.sp) },
                 leadingIcon = {
-                    Icon(category.icon, null, modifier = Modifier.size(16.dp))
+                    Icon(category.icon, contentDescription = "Search for ${category.label}", modifier = Modifier.size(16.dp))
                 }
             )
         }
