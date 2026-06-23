@@ -18,6 +18,15 @@ struct ContentView: View {
                     MapPolyline(route.polyline)
                         .stroke(.blue, lineWidth: 5)
                 }
+
+                ForEach(viewModel.poiResults) { poi in
+                    Annotation(poi.name, coordinate: poi.coordinate) {
+                        DetourBadge(poi: poi, isSelected: viewModel.selectedPOI == poi)
+                            .onTapGesture {
+                                viewModel.selectedPOI = poi
+                            }
+                    }
+                }
             }
             .ignoresSafeArea()
 
@@ -30,6 +39,10 @@ struct ContentView: View {
                 if let error = viewModel.errorMessage {
                     errorBanner(message: error)
                         .padding(.bottom, 8)
+                }
+
+                if !viewModel.poiResults.isEmpty {
+                    resultsList
                 }
 
                 RouteInputSheet(
@@ -48,6 +61,41 @@ struct ContentView: View {
         .onChange(of: viewModel.route) {
             fitRouteOnMap()
         }
+    }
+
+    private var resultsList: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("\(viewModel.poiResults.count) places found")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(viewModel.poiResults) { poi in
+                        POIResultRow(poi: poi, isSelected: viewModel.selectedPOI == poi)
+                            .onTapGesture {
+                                viewModel.selectedPOI = poi
+                                withAnimation {
+                                    position = .region(MKCoordinateRegion(
+                                        center: poi.coordinate,
+                                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                                    ))
+                                }
+                            }
+                        Divider().padding(.leading, 16)
+                    }
+                }
+            }
+            .frame(maxHeight: 200)
+        }
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.bottom, 8)
     }
 
     private func tripInfoPill(route: MKRoute) -> some View {
