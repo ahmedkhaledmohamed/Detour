@@ -17,10 +17,10 @@ struct DetourBadge: View {
 
     private var badgeColor: Color {
         switch poi.detourColor {
-        case .green: return .green
-        case .yellow: return .orange
-        case .orange: return .orange.opacity(0.8)
-        case .red: return .red
+        case .green: return Color(red: 0.2, green: 0.7, blue: 0.3)
+        case .yellow: return Color(red: 0.9, green: 0.7, blue: 0.1)
+        case .orange: return Color(red: 0.95, green: 0.5, blue: 0.1)
+        case .red: return Color(red: 0.9, green: 0.2, blue: 0.2)
         }
     }
 }

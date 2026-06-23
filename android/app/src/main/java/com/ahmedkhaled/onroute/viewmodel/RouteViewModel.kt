@@ -79,6 +79,8 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
 
     private var originDebounceJob: Job? = null
     private var destinationDebounceJob: Job? = null
+    private var originResolveId = 0
+    private var destinationResolveId = 0
 
     fun updateOriginQuery(query: String) {
         originQuery = query
@@ -105,10 +107,13 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
     fun selectOriginSuggestion(suggestion: PlaceSuggestion) {
         originQuery = suggestion.title
         originSuggestions = emptyList()
+        val requestId = ++originResolveId
         viewModelScope.launch {
             placesService.resolvePlace(suggestion.placeId)?.let { (latLng, name) ->
-                originLatLng = latLng
-                originName = name.ifEmpty { suggestion.title }
+                if (requestId == originResolveId) {
+                    originLatLng = latLng
+                    originName = name.ifEmpty { suggestion.title }
+                }
             }
         }
     }
@@ -116,10 +121,13 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
     fun selectDestinationSuggestion(suggestion: PlaceSuggestion) {
         destinationQuery = suggestion.title
         destinationSuggestions = emptyList()
+        val requestId = ++destinationResolveId
         viewModelScope.launch {
             placesService.resolvePlace(suggestion.placeId)?.let { (latLng, name) ->
-                destinationLatLng = latLng
-                destinationName = name.ifEmpty { suggestion.title }
+                if (requestId == destinationResolveId) {
+                    destinationLatLng = latLng
+                    destinationName = name.ifEmpty { suggestion.title }
+                }
             }
         }
     }

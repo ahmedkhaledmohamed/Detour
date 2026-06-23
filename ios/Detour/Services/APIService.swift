@@ -49,24 +49,39 @@ struct APIService {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 30
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        var lastError: Error = APIError.serverError("Unknown error")
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.serverError("Invalid response")
-        }
-
-        if httpResponse.statusCode != 200 {
-            if let errorBody = try? JSONDecoder().decode([String: String].self, from: data),
-               let message = errorBody["error"] {
-                throw APIError.serverError(message)
+        for attempt in 0..<2 {
+            if attempt > 0 {
+                try await Task.sleep(for: .seconds(1))
             }
-            throw APIError.serverError("Server error (\(httpResponse.statusCode))")
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.serverError("Invalid response")
+            }
+
+            if httpResponse.statusCode >= 500 || httpResponse.statusCode == 429 {
+                lastError = APIError.serverError("Server error (\(httpResponse.statusCode))")
+                continue
+            }
+
+            if httpResponse.statusCode != 200 {
+                if let errorBody = try? JSONDecoder().decode([String: String].self, from: data),
+                   let message = errorBody["error"] {
+                    throw APIError.serverError(message)
+                }
+                throw APIError.serverError("Server error (\(httpResponse.statusCode))")
+            }
+
+            do {
+                return try JSONDecoder().decode(SearchResponse.self, from: data)
+            } catch {
+                throw APIError.decodingError(error)
+            }
         }
 
-        do {
-            return try JSONDecoder().decode(SearchResponse.self, from: data)
-        } catch {
-            throw APIError.decodingError(error)
-        }
+        throw lastError
     }
 }

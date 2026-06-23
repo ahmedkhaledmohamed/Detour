@@ -25,10 +25,10 @@ data class POIResult(
         get() {
             val minutes = detourSeconds / 60
             return when {
-                minutes < 3 -> Color(0xFF4CAF50)
-                minutes < 7 -> Color(0xFFFFC107)
-                minutes < 15 -> Color(0xFFFF9800)
-                else -> Color(0xFFF44336)
+                minutes < 3 -> Color(0xFF33B249)
+                minutes < 7 -> Color(0xFFE6B312)
+                minutes < 15 -> Color(0xFFF28018)
+                else -> Color(0xFFE63333)
             }
         }
 }
