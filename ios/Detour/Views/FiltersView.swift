@@ -30,6 +30,8 @@ struct CategoryBar: View {
                                 : .primary
                         )
                     }
+                    .accessibilityLabel("Search for \(category.rawValue)")
+                    .accessibilityAddTraits(viewModel.selectedCategory == category ? .isSelected : [])
                 }
             }
             .padding(.horizontal, 16)
@@ -58,6 +60,8 @@ struct FiltersBar: View {
                 in: 1...30,
                 step: 1
             )
+            .accessibilityLabel("Maximum detour time")
+            .accessibilityValue("\(Int(viewModel.maxDetourMinutes)) minutes")
             .padding(.horizontal, 16)
         }
     }
