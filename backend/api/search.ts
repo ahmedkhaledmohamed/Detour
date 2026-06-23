@@ -1,5 +1,45 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+// Rate limiting: per-IP, in-memory (resets on cold start)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 20; // requests per window
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_LIMIT_MAX;
+}
+
+// CORS: restrict to known origins
+const ALLOWED_ORIGINS = [
+  "http://localhost:3000",
+  "http://localhost:8080",
+  "https://onroute-landing.vercel.app",
+  "https://getonroute.vercel.app",
+];
+
+function getCorsOrigin(req: VercelRequest): string {
+  const origin = req.headers.origin || "";
+  // Mobile apps send no origin header — allow those
+  if (!origin) return "*";
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  return "";
+}
+
+function sanitizeError(message: string): string {
+  return message
+    .replace(/key=[A-Za-z0-9_-]+/gi, "key=***")
+    .replace(/AIza[A-Za-z0-9_-]+/g, "***");
+}
+
+const VALID_TRAVEL_MODES = ["DRIVE", "WALK", "BICYCLE"];
+
 interface SearchRequest {
   origin: { lat: number; lng: number };
   destination: { lat: number; lng: number };
@@ -81,6 +121,7 @@ async function computeRoute(
     "https://routes.googleapis.com/directions/v2:computeRoutes",
     {
       method: "POST",
+      signal: AbortSignal.timeout(10000),
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": API_KEY!,
@@ -159,6 +200,7 @@ async function searchAlongRoute(
     "https://places.googleapis.com/v1/places:searchText",
     {
       method: "POST",
+      signal: AbortSignal.timeout(15000),
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": API_KEY!,
@@ -221,6 +263,12 @@ function formatDetour(seconds: number): string {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CORS
+  const corsOrigin = getCorsOrigin(req);
+  res.setHeader("Access-Control-Allow-Origin", corsOrigin || "null");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -229,20 +277,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  // Rate limiting
+  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || "unknown";
+  if (!checkRateLimit(ip)) {
+    return res.status(429).json({ error: "Too many requests. Try again in a minute." });
+  }
+
   if (!API_KEY) {
-    return res.status(500).json({ error: "GOOGLE_MAPS_API_KEY not configured" });
+    return res.status(500).json({ error: "Server configuration error" });
   }
 
   const body = req.body as SearchRequest;
 
+  // Input validation
   if (!body.origin || !body.destination || !body.query) {
     return res.status(400).json({
       error: "Missing required fields: origin, destination, query",
     });
   }
 
+  if (typeof body.origin.lat !== "number" || typeof body.origin.lng !== "number" ||
+      typeof body.destination.lat !== "number" || typeof body.destination.lng !== "number") {
+    return res.status(400).json({ error: "Coordinates must be numbers" });
+  }
+
+  if (body.origin.lat < -90 || body.origin.lat > 90 || body.destination.lat < -90 || body.destination.lat > 90) {
+    return res.status(400).json({ error: "Latitude must be between -90 and 90" });
+  }
+
+  if (body.origin.lng < -180 || body.origin.lng > 180 || body.destination.lng < -180 || body.destination.lng > 180) {
+    return res.status(400).json({ error: "Longitude must be between -180 and 180" });
+  }
+
+  if (typeof body.query !== "string" || body.query.trim().length === 0) {
+    return res.status(400).json({ error: "Query must be a non-empty string" });
+  }
+
   const openNow = body.openNow !== false;
-  const travelMode = body.travelMode || "DRIVE";
+  const travelMode = VALID_TRAVEL_MODES.includes(body.travelMode || "") ? body.travelMode! : "DRIVE";
   const cacheKey = getCacheKey(body.origin, body.destination, body.query, openNow, travelMode);
 
   // Check cache first
@@ -290,8 +362,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ results, route, cached: false });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown error";
-    return res.status(500).json({ error: message });
+    const raw = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: sanitizeError(raw) });
   }
 }
