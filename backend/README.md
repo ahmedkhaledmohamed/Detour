@@ -1,6 +1,6 @@
-# Detour Backend
+# OnRoute Backend
 
-Vercel Functions API for the Detour app. Handles route calculation, POI search along route, and detour time ranking.
+Vercel Functions API for the OnRoute app. Handles route calculation, POI search along route, and detour time ranking.
 
 ## Setup
 

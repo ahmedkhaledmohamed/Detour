@@ -8,7 +8,7 @@ Each step below is a self-contained prompt designed to be executed sequentially.
 
 **Branch:** `feat/project-setup`
 
-Set up the Xcode project for the Detour iOS app in the `ios/` directory of this repo (github.com/ahmedkhaledmohamed/detour).
+Set up the Xcode project for the OnRoute iOS app in the `ios/` directory of this repo (github.com/ahmedkhaledmohamed/detour).
 
 Requirements:
 - Create an Xcode project named "Detour" targeting iOS 17+ using SwiftUI
@@ -29,7 +29,7 @@ Requirements:
 
 **Branch:** `feat/route-input`
 
-Add route input to the Detour iOS app (`ios/` directory). The app currently shows a full-screen map.
+Add route input to the OnRoute iOS app (`ios/` directory). The app currently shows a full-screen map.
 
 Requirements:
 - Add a bottom sheet (`.sheet` or custom) with two text fields: "From" and "To"
@@ -48,7 +48,7 @@ Requirements:
 
 **Branch:** `feat/route-display`
 
-Add route calculation and rendering to the Detour iOS app. The app currently has a map + route input UI with origin/destination selection.
+Add route calculation and rendering to the OnRoute iOS app. The app currently has a map + route input UI with origin/destination selection.
 
 Requirements:
 - When the user taps "Search" with valid origin + destination, calculate a driving route using `MKDirections`
@@ -66,7 +66,7 @@ Requirements:
 
 **Branch:** `feat/backend-setup`
 
-Set up the backend for the Detour app in the `backend/` directory of this repo (github.com/ahmedkhaledmohamed/detour). The backend is a Vercel Functions project that the iOS app will call.
+Set up the backend for the OnRoute app in the `backend/` directory of this repo (github.com/ahmedkhaledmohamed/detour). The backend is a Vercel Functions project that the iOS app will call.
 
 Requirements:
 - Initialize a Node.js project in `backend/` with TypeScript
@@ -84,7 +84,7 @@ Requirements:
 
 **Branch:** `feat/backend-search`
 
-Wire up the real Google APIs in the Detour backend (`backend/` directory). The backend currently has a placeholder `POST /api/search` endpoint returning mock data.
+Wire up the real Google APIs in the OnRoute backend (`backend/` directory). The backend currently has a placeholder `POST /api/search` endpoint returning mock data.
 
 Requirements:
 - Replace the mock `/api/search` with real API calls:
@@ -106,7 +106,7 @@ Requirements:
 
 **Branch:** `feat/poi-results`
 
-Connect the Detour iOS app to the backend and display POI results. The app currently renders routes locally via MKDirections. The backend (`POST /api/search`) returns POIs ranked by detour time.
+Connect the OnRoute iOS app to the backend and display POI results. The app currently renders routes locally via MKDirections. The backend (`POST /api/search`) returns POIs ranked by detour time.
 
 Requirements:
 - Create an `APIService` in `Services/` that calls the backend's `/api/search` endpoint
@@ -128,7 +128,7 @@ Requirements:
 
 **Branch:** `feat/filters`
 
-Add category selection and filtering to the Detour iOS app. The app currently shows a search text field, route on map, and POI results ranked by detour time.
+Add category selection and filtering to the OnRoute iOS app. The app currently shows a search text field, route on map, and POI results ranked by detour time.
 
 Requirements:
 - Add a horizontal scroll of category quick buttons between the route input and results:
@@ -151,7 +151,7 @@ Requirements:
 
 **Branch:** `feat/nav-handoff`
 
-Add navigation handoff to the Detour iOS app. When a user finds a place they want to stop at, they need to navigate there via their preferred nav app.
+Add navigation handoff to the OnRoute iOS app. When a user finds a place they want to stop at, they need to navigate there via their preferred nav app.
 
 Requirements:
 - Add a "Navigate" button on each POI result (both in the list row and the map annotation callout)
@@ -171,7 +171,7 @@ Requirements:
 
 **Branch:** `feat/polish`
 
-Polish the Detour iOS app UX. The app is functionally complete (route input, search, results, filters, navigation handoff) but needs refined states.
+Polish the OnRoute iOS app UX. The app is functionally complete (route input, search, results, filters, navigation handoff) but needs refined states.
 
 Requirements:
 - **Loading state:** skeleton shimmer on the results list while searching. Subtle route animation while loading.
@@ -189,7 +189,7 @@ Requirements:
 
 **Branch:** `feat/launch-prep`
 
-Prepare the Detour iOS app for TestFlight distribution.
+Prepare the OnRoute iOS app for TestFlight distribution.
 
 Requirements:
 - **App icon:** Create a simple, distinctive app icon. Use a minimal design — a route line (curved path) with a pin/marker on it, using a bold accent color (suggest deep blue or teal). Generate all required sizes for the asset catalog.
@@ -200,7 +200,7 @@ Requirements:
   - Category: Navigation
   - Minimum iOS: 17.0
 - **Info.plist entries:**
-  - Location usage description: "Detour uses your location to find places along your route"
+  - Location usage description: "OnRoute uses your location to find places along your route"
   - Camera/Photos: not needed for v1
 - **Scheme configuration:** ensure Release build configuration is set up for archiving
 - Remove any hardcoded localhost/dev backend URLs — use a config file or build setting for the backend URL

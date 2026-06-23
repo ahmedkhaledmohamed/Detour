@@ -12,7 +12,7 @@ struct OnboardingView: View {
                 .foregroundStyle(.tint)
 
             VStack(spacing: 12) {
-                Text("Detour")
+                Text("OnRoute")
                     .font(.largeTitle.weight(.bold))
 
                 Text("Find what's worth the stop")

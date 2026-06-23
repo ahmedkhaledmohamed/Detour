@@ -1,13 +1,13 @@
 # App Store Metadata
 
 ## App Name
-Detour — Search Along Route
+OnRoute
 
 ## Subtitle (30 chars max)
 Find stops ranked by detour time
 
 ## Description
-Detour shows you places along your driving route, ranked by how little time they add to your trip.
+OnRoute shows you places along your driving route, ranked by how little time they add to your trip.
 
 Enter where you're going, pick what you need — coffee, food, gas, groceries, pharmacy, or EV charging — and instantly see every option sorted by detour time. "+2 min" beats "+15 min."
 
@@ -26,7 +26,7 @@ PERFECT FOR:
 - Road trippers planning efficient stops
 - Anyone who's ever thought "I wish I could find something good without going too far off my route"
 
-Google Maps shows you what's nearby. Detour shows you what's worth the stop.
+Google Maps shows you what's nearby. OnRoute shows you what's worth the stop.
 
 ## Keywords (100 chars max)
 detour,route,stops,coffee,food,gas,commute,navigation,places,along route,driving,trip,nearby
@@ -42,7 +42,7 @@ Secondary: Travel
 mailto:ahmed.khaled.a.mohamed@gmail.com
 
 ## Marketing URL
-https://usedetour.vercel.app
+https://getonroute.vercel.app
 
 ## What's New (v1.0.0)
 Initial release! Search for places along your route, ranked by detour time.

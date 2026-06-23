@@ -428,8 +428,8 @@ struct ContentView: View {
     // MARK: - Feedback
 
     private func sendFeedback() {
-        let subject = "Detour Beta Feedback"
-        let body = "\n\n---\nDetour v1.0.0 (iOS \(UIDevice.current.systemVersion))"
+        let subject = "OnRoute Beta Feedback"
+        let body = "\n\n---\nOnRoute v1.0.0 (iOS \(UIDevice.current.systemVersion))"
         let mailto = "mailto:ahmed.khaled.a.mohamed@gmail.com?subject=\(subject)&body=\(body)"
             .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         if let url = URL(string: mailto) {
