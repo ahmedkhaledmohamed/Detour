@@ -371,6 +371,7 @@
         @media (max-width: 768px) {
             .features-grid {
                 grid-template-columns: 1fr;
+                gap: 16px;
             }
             .steps {
                 flex-direction: column;
@@ -379,8 +380,48 @@
             .waitlist-form, .cta-form {
                 flex-direction: column;
             }
+            .waitlist-form button, .cta-form button {
+                width: 100%;
+                justify-content: center;
+            }
             .hero {
-                padding: 48px 0 40px;
+                padding: 40px 0 32px;
+            }
+            .hero h1 {
+                font-size: 32px;
+                letter-spacing: -1px;
+            }
+            .hero p {
+                font-size: 17px;
+                margin-bottom: 28px;
+            }
+            .hero-screenshot {
+                margin-top: 40px;
+                max-width: 240px;
+            }
+            .features, .how-it-works {
+                padding: 48px 0;
+            }
+            .features h2, .how-it-works h2 {
+                font-size: 24px;
+                margin-bottom: 32px;
+            }
+            .cta {
+                padding: 40px 0 60px;
+            }
+            .cta-box {
+                padding: 40px 20px;
+                border-radius: 16px;
+            }
+            .cta-box h2 {
+                font-size: 22px;
+            }
+            nav {
+                padding: 16px 0;
+            }
+            .badge {
+                padding: 5px 10px;
+                font-size: 12px;
             }
         }
     </style>
