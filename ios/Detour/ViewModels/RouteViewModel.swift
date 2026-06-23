@@ -17,6 +17,9 @@ final class RouteViewModel {
     var destinationSuggestions: [MKLocalSearchCompletion] = []
 
     var route: MKRoute?
+    var poiResults: [POIResult] = []
+    var selectedPOI: POIResult?
+    var searchQuery = "coffee"
     var isLoading = false
     var errorMessage: String?
 
@@ -110,24 +113,37 @@ final class RouteViewModel {
         isLoading = true
         errorMessage = nil
         route = nil
+        poiResults = []
+        selectedPOI = nil
 
         Task {
             do {
-                let request = MKDirections.Request()
-                request.source = MKMapItem(placemark: MKPlacemark(coordinate: origin))
-                request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination))
-                request.transportType = .automobile
+                // Local route for polyline rendering
+                let dirRequest = MKDirections.Request()
+                dirRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: origin))
+                dirRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination))
+                dirRequest.transportType = .automobile
 
-                let directions = MKDirections(request: request)
-                let response = try await directions.calculate()
+                async let directionsTask = MKDirections(request: dirRequest).calculate()
+
+                // Backend search for POIs along route
+                async let searchTask = APIService.search(
+                    origin: (origin.latitude, origin.longitude),
+                    destination: (destination.latitude, destination.longitude),
+                    query: searchQuery
+                )
+
+                let directionsResponse = try await directionsTask
+                let searchResponse = try await searchTask
 
                 await MainActor.run {
-                    self.route = response.routes.first
+                    self.route = directionsResponse.routes.first
+                    self.poiResults = searchResponse.results
                     self.isLoading = false
                 }
             } catch {
                 await MainActor.run {
-                    self.errorMessage = "Couldn't find a route between these locations."
+                    self.errorMessage = error.localizedDescription
                     self.isLoading = false
                 }
             }
@@ -144,6 +160,8 @@ final class RouteViewModel {
         originSuggestions = []
         destinationSuggestions = []
         route = nil
+        poiResults = []
+        selectedPOI = nil
         errorMessage = nil
     }
 
