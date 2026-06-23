@@ -23,6 +23,19 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 Spacer()
 
+                if viewModel.isLoading && !showResults {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Searching...")
+                            .font(.caption.weight(.medium))
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+                }
+
                 if let error = viewModel.errorMessage {
                     errorBanner(message: error)
                         .padding(.horizontal, 8)
@@ -34,9 +47,17 @@ struct ContentView: View {
                     .padding(.bottom, 4)
             }
         }
+        .onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .onChange(of: viewModel.route) {
             fitRouteOnMap()
             if viewModel.route != nil {
+                showResults = true
+            }
+        }
+        .onChange(of: viewModel.poiResults) {
+            if !viewModel.poiResults.isEmpty {
                 showResults = true
             }
         }
