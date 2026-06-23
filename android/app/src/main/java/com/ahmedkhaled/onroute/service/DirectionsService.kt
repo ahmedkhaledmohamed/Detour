@@ -22,12 +22,20 @@ class DirectionsService {
     suspend fun getDetourRoute(
         origin: LatLng,
         waypoint: LatLng,
-        destination: LatLng
+        destination: LatLng,
+        travelMode: String = "driving"
     ): DetourRoute? = withContext(Dispatchers.IO) {
+        val mode = when (travelMode.uppercase()) {
+            "DRIVE" -> "driving"
+            "WALK" -> "walking"
+            "BICYCLE" -> "bicycling"
+            else -> "driving"
+        }
         val url = "https://maps.googleapis.com/maps/api/directions/json" +
             "?origin=${origin.latitude},${origin.longitude}" +
             "&destination=${destination.latitude},${destination.longitude}" +
             "&waypoints=${waypoint.latitude},${waypoint.longitude}" +
+            "&mode=$mode" +
             "&key=${BuildConfig.MAPS_API_KEY}"
 
         try {

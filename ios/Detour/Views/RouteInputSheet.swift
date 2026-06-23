@@ -7,6 +7,7 @@ struct RouteInputSheet: View {
     var onSearch: () -> Void
 
     @FocusState private var focusedField: Field?
+    @State private var waitingForLocation = false
 
     enum Field: Hashable {
         case origin, destination
@@ -45,6 +46,13 @@ struct RouteInputSheet: View {
                 .padding(.bottom, 16)
         }
         .background(.ultraThinMaterial)
+        .onReceive(Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()) { _ in
+            if waitingForLocation, let loc = locationManager.currentLocation {
+                viewModel.useCurrentLocation(loc)
+                focusedField = nil
+                waitingForLocation = false
+            }
+        }
     }
 
     private var handle: some View {
@@ -71,16 +79,18 @@ struct RouteInputSheet: View {
 
             if viewModel.originQuery.isEmpty {
                 Button {
+                    waitingForLocation = true
                     locationManager.requestPermission()
                     locationManager.requestLocation()
-                    if let loc = locationManager.currentLocation {
-                        viewModel.useCurrentLocation(loc)
-                        focusedField = nil
-                    }
                 } label: {
-                    Image(systemName: "location.fill")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.blue)
+                    if waitingForLocation {
+                        ProgressView()
+                            .controlSize(.mini)
+                    } else {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.blue)
+                    }
                 }
             } else {
                 Button {

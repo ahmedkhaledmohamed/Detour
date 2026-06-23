@@ -48,11 +48,11 @@ final class RouteViewModel {
             }
         }
 
-        var mkTransportType: MKDirectionsTransportType {
+        var mkTransportType: MKDirectionsTransportType? {
             switch self {
             case .drive: return .automobile
             case .walk: return .walking
-            case .bike: return .walking
+            case .bike: return nil // MapKit has no bike mode; skip client-side route
             }
         }
     }
@@ -203,11 +203,11 @@ final class RouteViewModel {
 
         Task {
             do {
-                if route == nil {
+                if route == nil, let transportType = travelMode.mkTransportType {
                     let dirRequest = MKDirections.Request()
                     dirRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: origin))
                     dirRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination))
-                    dirRequest.transportType = travelMode.mkTransportType
+                    dirRequest.transportType = transportType
 
                     let directionsResponse = try await MKDirections(request: dirRequest).calculate()
                     await MainActor.run {

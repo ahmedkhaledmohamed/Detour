@@ -197,6 +197,35 @@ fun MainScreen(viewModel: RouteViewModel = viewModel()) {
                     }
                 }
 
+                if (viewModel.errorMessage != null) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                viewModel.errorMessage ?: "",
+                                modifier = Modifier.weight(1f),
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontSize = 13.sp
+                            )
+                            TextButton(onClick = { viewModel.search() }) {
+                                Text("Retry")
+                            }
+                            TextButton(onClick = { viewModel.errorMessage = null }) {
+                                Text("Dismiss")
+                            }
+                        }
+                    }
+                }
+
                 RouteInputPanel(
                     viewModel = viewModel,
                     onSearch = { viewModel.search() },

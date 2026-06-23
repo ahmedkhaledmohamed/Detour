@@ -38,7 +38,7 @@
 		8CDED49EE5D40E55804F057D /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		CB5686AC153B430D7432DCC1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E84E35D42657E57843972001 /* RouteInputSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteInputSheet.swift; sourceTree = "<group>"; };
-		EF57F5AA71249753B4707C76 /* Detour.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Detour.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EF57F5AA71249753B4707C76 /* Detour.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Detour.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F51745CAE85552C31ADC0C31 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -142,11 +142,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1630;
-				TargetAttributes = {
-					7F7F96C584BE7785F9643B43 = {
-						DevelopmentTeam = "";
-					};
-				};
 			};
 			buildConfigurationList = D3095DC874CFE6A0924733B8 /* Build configuration list for PBXProject "Detour" */;
 			developmentRegion = en;
@@ -208,7 +203,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 3;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = VMXQN9K3P2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Detour/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = OnRoute;
@@ -300,7 +295,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 3;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = VMXQN9K3P2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Detour/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = OnRoute;

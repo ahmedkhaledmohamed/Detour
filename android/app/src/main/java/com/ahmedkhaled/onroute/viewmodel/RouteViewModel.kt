@@ -192,7 +192,7 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
         val destination = destinationLatLng ?: return
 
         viewModelScope.launch {
-            val detour = directionsService.getDetourRoute(origin, poi.latLng, destination)
+            val detour = directionsService.getDetourRoute(origin, poi.latLng, destination, travelMode.apiValue)
             if (detour != null) {
                 detourRoutePoints = detour.points
             }
