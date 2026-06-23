@@ -2,13 +2,17 @@
   "name": "detour-backend",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@vercel/node": "^5.0.0"
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@vercel/node": "^5.0.0",
     "typescript": "^5.7.0"
   }
 }
