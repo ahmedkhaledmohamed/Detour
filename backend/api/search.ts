@@ -105,14 +105,8 @@ async function searchAlongRoute(
     },
     routingParameters: {
       origin: {
-        location: {
-          latLng: { latitude: origin.lat, longitude: origin.lng },
-        },
-      },
-      destination: {
-        location: {
-          latLng: { latitude: destination.lat, longitude: destination.lng },
-        },
+        latitude: origin.lat,
+        longitude: origin.lng,
       },
       travelMode: "DRIVE",
     },
