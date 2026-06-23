@@ -7,13 +7,16 @@ struct ContentView: View {
     @State private var navigatingPOI: POIResult?
     @State private var showNavSheet = false
     @State private var showResults = false
-    @State private var detourRoute: MKRoute?
+    @State private var detourLeg1: MKRoute?
+    @State private var detourLeg2: MKRoute?
     @State private var position: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 43.6532, longitude: -79.3832),
             span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
         )
     )
+
+    private var hasDetour: Bool { detourLeg1 != nil }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -99,11 +102,16 @@ struct ContentView: View {
         Map(position: $position) {
             if let route = viewModel.route {
                 MapPolyline(route.polyline)
-                    .stroke(.blue.opacity(detourRoute != nil ? 0.3 : 1.0), lineWidth: 5)
+                    .stroke(.blue.opacity(hasDetour ? 0.3 : 1.0), lineWidth: 5)
             }
 
-            if let detourRoute {
-                MapPolyline(detourRoute.polyline)
+            if let detourLeg1 {
+                MapPolyline(detourLeg1.polyline)
+                    .stroke(.orange, lineWidth: 5)
+            }
+
+            if let detourLeg2 {
+                MapPolyline(detourLeg2.polyline)
                     .stroke(.orange, lineWidth: 5)
             }
 
@@ -142,11 +150,13 @@ struct ContentView: View {
         }
         .mapControls {
             MapCompass()
-            MapScaleView()
+        }
+        .safeAreaInset(edge: .bottom) {
+            Color.clear.frame(height: 140)
         }
     }
 
-    // MARK: - Bottom Panel (route input + trip info)
+    // MARK: - Bottom Panel
 
     private var bottomPanel: some View {
         VStack(spacing: 8) {
@@ -154,7 +164,7 @@ struct ContentView: View {
                 HStack(spacing: 8) {
                     tripInfoPill
 
-                    if detourRoute != nil, let poi = viewModel.selectedPOI {
+                    if hasDetour, let poi = viewModel.selectedPOI {
                         Button {
                             navigateTo(poi)
                         } label: {
@@ -202,7 +212,7 @@ struct ContentView: View {
                 locationManager: locationManager,
                 onSearch: {
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    detourRoute = nil
+                    clearDetourRoute()
                     viewModel.search()
                 }
             )
@@ -301,15 +311,10 @@ struct ContentView: View {
         guard let origin = viewModel.originCoordinate,
               let destination = viewModel.destinationCoordinate else { return }
 
+        let waypoint = MKMapItem(placemark: MKPlacemark(coordinate: poi.coordinate))
+        waypoint.name = poi.name
+
         Task {
-            let request = MKDirections.Request()
-            request.source = MKMapItem(placemark: MKPlacemark(coordinate: origin))
-            request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination))
-            request.transportType = .automobile
-
-            let waypoint = MKMapItem(placemark: MKPlacemark(coordinate: poi.coordinate))
-            waypoint.name = poi.name
-
             let leg1Request = MKDirections.Request()
             leg1Request.source = MKMapItem(placemark: MKPlacemark(coordinate: origin))
             leg1Request.destination = waypoint
@@ -320,30 +325,36 @@ struct ContentView: View {
             leg2Request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination))
             leg2Request.transportType = .automobile
 
-            async let leg1 = MKDirections(request: leg1Request).calculate()
-            async let leg2 = MKDirections(request: leg2Request).calculate()
+            async let leg1Task = MKDirections(request: leg1Request).calculate()
+            async let leg2Task = MKDirections(request: leg2Request).calculate()
 
-            if let r1 = try? await leg1.routes.first,
-               let r2 = try? await leg2.routes.first {
+            if let r1 = try? await leg1Task.routes.first,
+               let r2 = try? await leg2Task.routes.first {
                 await MainActor.run {
-                    self.detourRoute = r1
-                    fitDetourOnMap(leg1: r1, leg2: r2, poi: poi)
+                    self.detourLeg1 = r1
+                    self.detourLeg2 = r2
+                    fitDetourOnMap(leg1: r1, leg2: r2)
                 }
             }
         }
     }
 
     private func clearDetourRoute() {
-        detourRoute = nil
+        detourLeg1 = nil
+        detourLeg2 = nil
         viewModel.selectedPOI = nil
         fitRouteOnMap()
     }
 
-    private func fitDetourOnMap(leg1: MKRoute, leg2: MKRoute, poi: POIResult) {
-        let rect1 = leg1.polyline.boundingMapRect
-        let rect2 = leg2.polyline.boundingMapRect
-        let combined = rect1.union(rect2)
-        let padded = combined.insetBy(dx: -combined.size.width * 0.15, dy: -combined.size.height * 0.15)
+    private func fitDetourOnMap(leg1: MKRoute, leg2: MKRoute) {
+        let combined = leg1.polyline.boundingMapRect.union(leg2.polyline.boundingMapRect)
+        // Extra bottom padding so the route shows above the sheet
+        let padded = MKMapRect(
+            x: combined.origin.x - combined.size.width * 0.15,
+            y: combined.origin.y - combined.size.height * 0.6,
+            width: combined.size.width * 1.3,
+            height: combined.size.height * 2.0
+        )
         withAnimation(.easeInOut(duration: 0.5)) {
             position = .rect(padded)
         }
@@ -420,7 +431,13 @@ struct ContentView: View {
     private func fitRouteOnMap() {
         guard let route = viewModel.route else { return }
         let rect = route.polyline.boundingMapRect
-        let padded = rect.insetBy(dx: -rect.size.width * 0.15, dy: -rect.size.height * 0.25)
+        // Bias upward so route is visible above the bottom panel + sheet
+        let padded = MKMapRect(
+            x: rect.origin.x - rect.size.width * 0.15,
+            y: rect.origin.y - rect.size.height * 0.5,
+            width: rect.size.width * 1.3,
+            height: rect.size.height * 1.8
+        )
         withAnimation(.easeInOut(duration: 0.5)) {
             position = .rect(padded)
         }
