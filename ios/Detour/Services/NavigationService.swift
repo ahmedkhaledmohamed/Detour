@@ -94,18 +94,18 @@ struct NavigationService {
         destination: CLLocationCoordinate2D?,
         destinationName: String?
     ) {
-        // Use Google Maps universal link with addresses for readable waypoints
-        var components = URLComponents(string: "https://www.google.com/maps/dir/")!
+        let originStr = originName ?? (origin.map { "\($0.latitude),\($0.longitude)" } ?? "")
+        let poiStr = poi.address.isEmpty ? "\(poi.coordinate.latitude),\(poi.coordinate.longitude)" : poi.address
+        let destStr = destinationName ?? (destination.map { "\($0.latitude),\($0.longitude)" } ?? "")
 
-        let originStr = originName?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
-            ?? (origin.map { "\($0.latitude),\($0.longitude)" } ?? "")
-        let poiStr = poi.address.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? poi.name
-        let destStr = destinationName?.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
-            ?? (destination.map { "\($0.latitude),\($0.longitude)" } ?? "")
+        let urlString = "https://www.google.com/maps/dir/?api=1" +
+            "&origin=\(originStr)" +
+            "&destination=\(destStr)" +
+            "&waypoints=\(poiStr)" +
+            "&travelmode=driving"
 
-        components.path = "/maps/dir/\(originStr)/\(poiStr)/\(destStr)"
-
-        if let url = components.url {
+        if let encoded = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+           let url = URL(string: encoded) {
             UIApplication.shared.open(url)
         }
     }
