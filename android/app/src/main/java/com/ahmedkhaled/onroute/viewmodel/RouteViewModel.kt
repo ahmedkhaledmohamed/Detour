@@ -180,6 +180,9 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
                 routeDistanceFormatted = if (km >= 10) "%.0f km".format(km) else "%.1f km".format(km)
 
                 poiResults = response.results
+                if (response.results.isEmpty()) {
+                    errorMessage = "No places found along this route. Try a different category."
+                }
                 isLoading = false
             } catch (e: Exception) {
                 errorMessage = e.message ?: "Search failed"
