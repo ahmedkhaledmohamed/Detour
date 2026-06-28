@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct DetourApp: App {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -18,6 +19,4 @@ struct DetourApp: App {
             }
         }
     }
-
-    @Environment(\.scenePhase) private var scenePhase
 }

@@ -1,17 +1,19 @@
 import Foundation
-import SwiftUI
 
-@Observable
 final class AnalyticsService {
     static let shared = AnalyticsService()
 
-    @AppStorage("analyticsAnonymousId") private var storedId = ""
+    private let anonymousId: String
 
-    var anonymousId: String {
-        if storedId.isEmpty {
-            storedId = UUID().uuidString
+    private init() {
+        let key = "analyticsAnonymousId"
+        if let existing = UserDefaults.standard.string(forKey: key), !existing.isEmpty {
+            anonymousId = existing
+        } else {
+            let id = UUID().uuidString
+            UserDefaults.standard.set(id, forKey: key)
+            anonymousId = id
         }
-        return storedId
     }
 
     func track(_ event: String, properties: [String: Any] = [:]) {
