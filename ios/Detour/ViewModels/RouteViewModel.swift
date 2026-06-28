@@ -242,6 +242,15 @@ final class RouteViewModel {
                         "travelMode": self.travelMode.rawValue,
                         "resultCount": searchResponse.results.count,
                     ])
+                    if let o = self.originCoordinate, let d = self.destinationCoordinate {
+                        RecentSearchStore.shared.add(
+                            originName: self.originName ?? "Origin",
+                            origin: o,
+                            destinationName: self.destinationName ?? "Destination",
+                            destination: d,
+                            category: self.searchQuery
+                        )
+                    }
                 }
             } catch {
                 await MainActor.run {
@@ -285,6 +294,25 @@ final class RouteViewModel {
         route = nil
 
         if let cat = Category.allCases.first(where: { $0.query == saved.defaultCategory }) {
+            selectedCategory = cat
+            searchQuery = cat.query
+        }
+
+        search()
+    }
+
+    func loadRecentSearch(_ recent: RecentSearch) {
+        originQuery = recent.originName
+        originCoordinate = recent.originCoordinate
+        originName = recent.originName
+        destinationQuery = recent.destinationName
+        destinationCoordinate = recent.destinationCoordinate
+        destinationName = recent.destinationName
+        originSuggestions = []
+        destinationSuggestions = []
+        route = nil
+
+        if let cat = Category.allCases.first(where: { $0.query == recent.category }) {
             selectedCategory = cat
             searchQuery = cat.query
         }

@@ -15,6 +15,9 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.History
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -279,6 +282,32 @@ fun MainScreen(viewModel: RouteViewModel = viewModel()) {
                         onSelect = { viewModel.loadSavedRoute(it) },
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
+                }
+
+                if (viewModel.routePoints.isEmpty() && viewModel.savedRoutes.isEmpty() && viewModel.recentSearches.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 12.dp, bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        viewModel.recentSearches.take(5).forEach { recent ->
+                            Surface(
+                                onClick = { viewModel.loadRecentSearch(recent) },
+                                shape = RoundedCornerShape(20.dp),
+                                tonalElevation = 2.dp
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(Icons.Default.History, null, modifier = Modifier.size(12.dp))
+                                    Text("${recent.originName} → ${recent.destinationName}", fontSize = 11.sp, maxLines = 1)
+                                }
+                            }
+                        }
+                    }
                 }
 
                 RouteInputPanel(

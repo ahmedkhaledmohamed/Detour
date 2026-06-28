@@ -7,6 +7,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ahmedkhaled.onroute.model.*
+import com.ahmedkhaled.onroute.model.RecentSearch
+import com.ahmedkhaled.onroute.model.RecentSearchStore
 import com.ahmedkhaled.onroute.model.SavedRoute
 import com.ahmedkhaled.onroute.model.SavedRoutesStore
 import com.ahmedkhaled.onroute.service.AnalyticsService
@@ -80,12 +82,16 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
     private val apiService = ApiService.create()
     private val directionsService = DirectionsService()
     val savedRoutesStore = SavedRoutesStore(application)
+    private val recentSearchStore = RecentSearchStore(application)
 
     var savedRoutes by mutableStateOf<List<SavedRoute>>(emptyList())
+        private set
+    var recentSearches by mutableStateOf<List<RecentSearch>>(emptyList())
         private set
 
     init {
         savedRoutes = savedRoutesStore.load()
+        recentSearches = recentSearchStore.load()
     }
 
     private var originDebounceJob: Job? = null
@@ -202,6 +208,16 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
                     "travelMode" to travelMode.apiValue,
                     "resultCount" to response.results.size,
                 ))
+                val o = originLatLng
+                val d = destinationLatLng
+                if (o != null && d != null) {
+                    recentSearchStore.add(
+                        originName ?: "Origin", o,
+                        destinationName ?: "Destination", d,
+                        searchQuery
+                    )
+                    recentSearches = recentSearchStore.load()
+                }
             } catch (e: Exception) {
                 errorMessage = e.message ?: "Search failed"
                 isLoading = false
@@ -219,6 +235,26 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
         destinationQuery = tmpQuery
         destinationLatLng = tmpLatLng
         destinationName = tmpName
+    }
+
+    fun loadRecentSearch(recent: RecentSearch) {
+        originQuery = recent.originName
+        originLatLng = recent.originLatLng
+        originName = recent.originName
+        destinationQuery = recent.destinationName
+        destinationLatLng = recent.destinationLatLng
+        destinationName = recent.destinationName
+        originSuggestions = emptyList()
+        destinationSuggestions = emptyList()
+        routePoints = emptyList()
+
+        val cat = Category.entries.firstOrNull { it.query == recent.category }
+        if (cat != null) {
+            selectedCategory = cat
+            searchQuery = cat.query
+        }
+
+        search()
     }
 
     fun loadSavedRoute(saved: SavedRoute) {
