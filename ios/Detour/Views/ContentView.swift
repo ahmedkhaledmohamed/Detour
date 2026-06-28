@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var detourLeg2: MKRoute?
     @State private var position: MapCameraPosition = .userLocation(fallback: .automatic)
     @State private var savedRoutes: [SavedRoute] = []
+    @State private var recentSearches: [RecentSearch] = []
     @State private var showSavePrompt = false
 
     private var hasDetour: Bool { detourLeg1 != nil }
@@ -61,7 +62,10 @@ struct ContentView: View {
                 showResults = true
             }
         }
-        .onAppear { savedRoutes = SavedRoutesStore.shared.load() }
+        .onAppear {
+            savedRoutes = SavedRoutesStore.shared.load()
+            recentSearches = RecentSearchStore.shared.load()
+        }
         .sheet(isPresented: $showResults) {
             resultsSheet
                 .presentationDetents([.medium, .large, .fraction(0.35)])
@@ -178,6 +182,31 @@ struct ContentView: View {
                         savedRoutes = SavedRoutesStore.shared.load()
                     }
                 )
+            }
+
+            if viewModel.route == nil && savedRoutes.isEmpty && !recentSearches.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(recentSearches.prefix(5)) { recent in
+                            Button {
+                                viewModel.loadRecentSearch(recent)
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "clock.arrow.circlepath")
+                                        .font(.system(size: 10))
+                                    Text("\(recent.originName) → \(recent.destinationName)")
+                                        .font(.caption2)
+                                        .lineLimit(1)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(.ultraThinMaterial, in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                }
             }
 
             if viewModel.route != nil {

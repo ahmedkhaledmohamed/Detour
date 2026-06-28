@@ -74,3 +74,58 @@ final class SavedRoutesStore {
         }
     }
 }
+
+struct RecentSearch: Identifiable, Codable, Hashable {
+    let id: String
+    let originName: String
+    let originLat: Double
+    let originLng: Double
+    let destinationName: String
+    let destinationLat: Double
+    let destinationLng: Double
+    let category: String
+    let timestamp: Date
+
+    var originCoordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: originLat, longitude: originLng)
+    }
+    var destinationCoordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: destinationLat, longitude: destinationLng)
+    }
+}
+
+final class RecentSearchStore {
+    static let shared = RecentSearchStore()
+    private let key = "recentSearches"
+    private let maxEntries = 10
+
+    func load() -> [RecentSearch] {
+        guard let data = UserDefaults.standard.data(forKey: key),
+              let entries = try? JSONDecoder().decode([RecentSearch].self, from: data)
+        else { return [] }
+        return entries
+    }
+
+    func add(originName: String, origin: CLLocationCoordinate2D,
+             destinationName: String, destination: CLLocationCoordinate2D,
+             category: String) {
+        var entries = load()
+        entries.removeAll {
+            $0.originName == originName && $0.destinationName == destinationName && $0.category == category
+        }
+        let entry = RecentSearch(
+            id: UUID().uuidString,
+            originName: originName,
+            originLat: origin.latitude, originLng: origin.longitude,
+            destinationName: destinationName,
+            destinationLat: destination.latitude, destinationLng: destination.longitude,
+            category: category,
+            timestamp: Date()
+        )
+        entries.insert(entry, at: 0)
+        if entries.count > maxEntries { entries = Array(entries.prefix(maxEntries)) }
+        if let data = try? JSONEncoder().encode(entries) {
+            UserDefaults.standard.set(data, forKey: key)
+        }
+    }
+}
