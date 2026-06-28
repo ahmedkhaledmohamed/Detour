@@ -83,6 +83,7 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
     private var destinationResolveId = 0
 
     fun updateOriginQuery(query: String) {
+        if (query == originQuery) return
         originQuery = query
         originLatLng = null
         originName = null
@@ -94,6 +95,7 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateDestinationQuery(query: String) {
+        if (query == destinationQuery) return
         destinationQuery = query
         destinationLatLng = null
         destinationName = null
