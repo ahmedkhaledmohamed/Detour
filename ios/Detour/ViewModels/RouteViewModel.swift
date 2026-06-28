@@ -136,6 +136,7 @@ final class RouteViewModel {
     }
 
     func updateOriginQuery(_ query: String) {
+        guard query != originQuery else { return }
         originQuery = query
         originCoordinate = nil
         originName = nil
@@ -143,6 +144,7 @@ final class RouteViewModel {
     }
 
     func updateDestinationQuery(_ query: String) {
+        guard query != destinationQuery else { return }
         destinationQuery = query
         destinationCoordinate = nil
         destinationName = nil
