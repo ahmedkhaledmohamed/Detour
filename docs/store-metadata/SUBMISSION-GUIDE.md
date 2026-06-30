@@ -9,7 +9,7 @@
 - [x] Terms of Service live: https://onroute-landing.vercel.app/terms.html
 - [x] Export compliance: ITSAppUsesNonExemptEncryption = false
 - [x] App icon in asset catalog
-- [ ] Screenshots uploaded (see `store-screenshots/` directory)
+- [x] Screenshots ready in `docs/store-screenshots/ios/` (3 screenshots, 1320x2868)
 
 ### Steps
 
@@ -57,11 +57,11 @@
 ## Android (Google Play Console)
 
 ### Prerequisites
-- [ ] Google Play developer account ($25 one-time fee): https://play.google.com/console
+- [x] Google Play developer account: ID `4781353193417404328`
 - [x] Signed release AAB: run `scripts/build-release-aab.sh`
 - [x] Privacy policy live
 - [x] Terms of Service live
-- [ ] Screenshots uploaded
+- [x] Screenshots ready in `docs/store-screenshots/android/` (3 screenshots, 1080x2340)
 
 ### Steps
 
