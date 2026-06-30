@@ -1,10 +1,22 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { neon } from "@neondatabase/serverless";
 
-const sql = neon(process.env.DATABASE_URL!);
+const DATABASE_URL = process.env.DATABASE_URL;
+
+async function query(sql: string, params: unknown[] = []): Promise<{ rows: Record<string, unknown>[] }> {
+  const url = DATABASE_URL!.replace("postgresql://", "https://").replace(/\/[^?]+/, "/sql");
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Neon-Connection-String": DATABASE_URL! },
+    body: JSON.stringify({ query: sql, params }),
+  });
+  if (!response.ok) throw new Error(`DB error: ${response.status}`);
+  return response.json() as Promise<{ rows: Record<string, unknown>[] }>;
+}
+
+let tableReady = false;
 
 async function ensureTable() {
-  await sql`
+  await query(`
     CREATE TABLE IF NOT EXISTS visits (
       id SERIAL PRIMARY KEY,
       anonymous_id TEXT NOT NULL,
@@ -16,14 +28,18 @@ async function ensureTable() {
       visited_at TIMESTAMPTZ DEFAULT NOW(),
       UNIQUE(anonymous_id, place_id)
     )
-  `;
-  await sql`
+  `);
+  await query(`
     CREATE INDEX IF NOT EXISTS idx_visits_user_corridor
     ON visits(anonymous_id, corridor_key)
-  `;
+  `);
+  tableReady = true;
 }
 
-let tableReady = false;
+function makeCorridorKey(oLat?: number, oLng?: number, dLat?: number, dLng?: number): string | null {
+  if (!oLat || !oLng || !dLat || !dLng) return null;
+  return `${oLat.toFixed(2)},${oLng.toFixed(2)}|${dLat.toFixed(2)},${dLng.toFixed(2)}`;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -32,14 +48,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  if (!process.env.DATABASE_URL) {
+  if (!DATABASE_URL) {
     return res.status(500).json({ error: "Database not configured" });
   }
 
-  if (!tableReady) {
-    await ensureTable();
-    tableReady = true;
-  }
+  if (!tableReady) await ensureTable();
 
   const anonymousId = req.headers["x-anonymous-id"] as string;
   if (!anonymousId) {
@@ -48,56 +61,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === "POST") {
     const { placeId, placeName, lat, lng, originLat, originLng, destLat, destLng } = req.body || {};
-
-    if (!placeId) {
-      return res.status(400).json({ error: "placeId required" });
-    }
+    if (!placeId) return res.status(400).json({ error: "placeId required" });
 
     const corridorKey = makeCorridorKey(originLat, originLng, destLat, destLng);
 
-    await sql`
-      INSERT INTO visits (anonymous_id, place_id, place_name, lat, lng, corridor_key)
-      VALUES (${anonymousId}, ${placeId}, ${placeName || null}, ${lat || null}, ${lng || null}, ${corridorKey || null})
-      ON CONFLICT (anonymous_id, place_id) DO UPDATE SET visited_at = NOW()
-    `;
+    await query(
+      `INSERT INTO visits (anonymous_id, place_id, place_name, lat, lng, corridor_key)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (anonymous_id, place_id) DO UPDATE SET visited_at = NOW()`,
+      [anonymousId, placeId, placeName || null, lat || null, lng || null, corridorKey]
+    );
 
     return res.status(200).json({ ok: true });
   }
 
   if (req.method === "GET") {
-    const corridorKey = req.query.corridor as string;
     const placeIds = req.query.placeIds as string;
+    if (!placeIds) return res.status(400).json({ error: "placeIds query param required" });
 
-    if (placeIds) {
-      const ids = placeIds.split(",");
-      const rows = await sql`
-        SELECT place_id, visited_at FROM visits
-        WHERE anonymous_id = ${anonymousId} AND place_id = ANY(${ids})
-      `;
-      const visitMap: Record<string, string> = {};
-      for (const row of rows) {
-        visitMap[row.place_id] = row.visited_at;
-      }
-      return res.status(200).json({ visits: visitMap });
+    const ids = placeIds.split(",");
+    const placeholders = ids.map((_, i) => `$${i + 2}`).join(",");
+    const result = await query(
+      `SELECT place_id, visited_at FROM visits WHERE anonymous_id = $1 AND place_id IN (${placeholders})`,
+      [anonymousId, ...ids]
+    );
+
+    const visitMap: Record<string, string> = {};
+    for (const row of result.rows) {
+      visitMap[row.place_id as string] = row.visited_at as string;
     }
-
-    if (corridorKey) {
-      const rows = await sql`
-        SELECT place_id, place_name, lat, lng, visited_at FROM visits
-        WHERE anonymous_id = ${anonymousId} AND corridor_key = ${corridorKey}
-        ORDER BY visited_at DESC
-        LIMIT 50
-      `;
-      return res.status(200).json({ visits: rows });
-    }
-
-    return res.status(400).json({ error: "placeIds or corridor query param required" });
+    return res.status(200).json({ visits: visitMap });
   }
 
   return res.status(405).json({ error: "Method not allowed" });
-}
-
-function makeCorridorKey(oLat?: number, oLng?: number, dLat?: number, dLng?: number): string | null {
-  if (!oLat || !oLng || !dLat || !dLng) return null;
-  return `${oLat.toFixed(2)},${oLng.toFixed(2)}|${dLat.toFixed(2)},${dLng.toFixed(2)}`;
 }

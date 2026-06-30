@@ -2,7 +2,6 @@
   "name": "detour-backend",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "engines": {
     "node": "20.x"
   },
@@ -10,7 +9,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
     "@vercel/node": "^5.0.0"
   },
   "devDependencies": {
