@@ -6,8 +6,31 @@ struct CategoryBar: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                Button {
+                    viewModel.toggleTimeBudgetMode()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 12))
+                        Text("Browse All")
+                            .font(.caption.weight(.medium))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(
+                        viewModel.timeBudgetMode
+                            ? Color.orange
+                            : Color(.systemGray5),
+                        in: Capsule()
+                    )
+                    .foregroundStyle(viewModel.timeBudgetMode ? .white : .primary)
+                }
+
                 ForEach(RouteViewModel.Category.allCases) { category in
                     Button {
+                        if viewModel.timeBudgetMode {
+                            viewModel.toggleTimeBudgetMode()
+                        }
                         viewModel.selectCategory(category)
                     } label: {
                         HStack(spacing: 4) {

@@ -51,6 +51,7 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
     var stopResults by mutableStateOf<List<StopResults>>(emptyList())
         private set
     var selectedCategory by mutableStateOf<Category?>(Category.COFFEE)
+    var timeBudgetMode by mutableStateOf(false)
     var maxDetourMinutes by mutableStateOf(15f)
     var openNowOnly by mutableStateOf(true)
 
@@ -241,6 +242,19 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
         destinationQuery = tmpQuery
         destinationLatLng = tmpLatLng
         destinationName = tmpName
+    }
+
+    fun toggleTimeBudgetMode() {
+        timeBudgetMode = !timeBudgetMode
+        if (timeBudgetMode) {
+            selectedCategory = null
+            additionalQueries = emptyList()
+            searchQuery = "restaurants coffee gas grocery pharmacy"
+        } else {
+            selectedCategory = Category.COFFEE
+            searchQuery = Category.COFFEE.query
+        }
+        if (isSearchReady) search()
     }
 
     fun addStop(category: Category) {

@@ -25,6 +25,7 @@ final class RouteViewModel {
     var maxDetourMinutes: Double = 15
     var openNowOnly = true
     var selectedCategory: Category? = .coffee
+    var timeBudgetMode = false
     var travelMode: TravelMode = .drive
 
     enum TravelMode: String, CaseIterable, Identifiable {
@@ -304,6 +305,19 @@ final class RouteViewModel {
         }
 
         search()
+    }
+
+    func toggleTimeBudgetMode() {
+        timeBudgetMode.toggle()
+        if timeBudgetMode {
+            selectedCategory = nil
+            additionalQueries = []
+            searchQuery = "restaurants coffee gas grocery pharmacy"
+        } else {
+            selectedCategory = .coffee
+            searchQuery = Category.coffee.query
+        }
+        if isSearchReady { search() }
     }
 
     func addStop(_ category: Category) {
