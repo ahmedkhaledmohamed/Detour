@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@vercel/node": "^5.0.0",
-    "@vercel/postgres": "^0.10.0"
+    "pg": "^8.13.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

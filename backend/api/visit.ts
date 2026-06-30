@@ -1,23 +1,34 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "@vercel/postgres";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 3,
+});
 
 let tableReady = false;
 
 async function ensureTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS visits (
-      id SERIAL PRIMARY KEY,
-      anonymous_id TEXT NOT NULL,
-      place_id TEXT NOT NULL,
-      place_name TEXT,
-      lat DOUBLE PRECISION,
-      lng DOUBLE PRECISION,
-      corridor_key TEXT,
-      visited_at TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE(anonymous_id, place_id)
-    )
-  `;
-  tableReady = true;
+  const client = await pool.connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS visits (
+        id SERIAL PRIMARY KEY,
+        anonymous_id TEXT NOT NULL,
+        place_id TEXT NOT NULL,
+        place_name TEXT,
+        lat DOUBLE PRECISION,
+        lng DOUBLE PRECISION,
+        corridor_key TEXT,
+        visited_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(anonymous_id, place_id)
+      )
+    `);
+    tableReady = true;
+  } finally {
+    client.release();
+  }
 }
 
 function makeCorridorKey(oLat?: number, oLng?: number, dLat?: number, dLng?: number): string | null {
@@ -31,6 +42,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Anonymous-Id");
 
   if (req.method === "OPTIONS") return res.status(200).end();
+
+  if (!process.env.DATABASE_URL) {
+    return res.status(500).json({ error: "Database not configured" });
+  }
 
   if (!tableReady) await ensureTable();
 
@@ -46,11 +61,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const corridorKey = makeCorridorKey(originLat, originLng, destLat, destLng);
 
-      await sql`
-        INSERT INTO visits (anonymous_id, place_id, place_name, lat, lng, corridor_key)
-        VALUES (${anonymousId}, ${placeId}, ${placeName || null}, ${lat || null}, ${lng || null}, ${corridorKey})
-        ON CONFLICT (anonymous_id, place_id) DO UPDATE SET visited_at = NOW()
-      `;
+      await pool.query(
+        `INSERT INTO visits (anonymous_id, place_id, place_name, lat, lng, corridor_key)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (anonymous_id, place_id) DO UPDATE SET visited_at = NOW()`,
+        [anonymousId, placeId, placeName || null, lat || null, lng || null, corridorKey]
+      );
 
       return res.status(200).json({ ok: true });
     }
@@ -60,14 +76,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!placeIds) return res.status(400).json({ error: "placeIds query param required" });
 
       const ids = placeIds.split(",");
-      const result = await sql`
-        SELECT place_id, visited_at FROM visits
-        WHERE anonymous_id = ${anonymousId} AND place_id = ANY(${ids})
-      `;
+      const placeholders = ids.map((_, i) => `$${i + 2}`).join(",");
+      const result = await pool.query(
+        `SELECT place_id, visited_at FROM visits WHERE anonymous_id = $1 AND place_id IN (${placeholders})`,
+        [anonymousId, ...ids]
+      );
 
       const visitMap: Record<string, string> = {};
       for (const row of result.rows) {
-        visitMap[row.place_id as string] = row.visited_at as string;
+        visitMap[row.place_id] = row.visited_at;
       }
       return res.status(200).json({ visits: visitMap });
     }
