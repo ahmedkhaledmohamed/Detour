@@ -379,9 +379,11 @@ private fun ResultsSheet(viewModel: RouteViewModel) {
                     )
                     FilledTonalButton(
                         onClick = {
-                            selectedPoi?.let { poi ->
+                            val stops = if (viewModel.selectedStops.isNotEmpty()) viewModel.selectedStops
+                                        else listOfNotNull(selectedPoi)
+                            if (stops.isNotEmpty()) {
                                 NavigationService.openGoogleMaps(
-                                    context, poi,
+                                    context, stops,
                                     viewModel.originName,
                                     viewModel.destinationName,
                                     viewModel.travelMode.apiValue

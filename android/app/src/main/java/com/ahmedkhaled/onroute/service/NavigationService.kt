@@ -14,24 +14,36 @@ object NavigationService {
 
     fun openGoogleMaps(
         context: Context,
-        poi: POIResult,
+        stops: List<POIResult>,
         originName: String?,
         destinationName: String?,
         travelMode: String = "DRIVE"
     ) {
         val origin = URLEncoder.encode(originName ?: "", "UTF-8")
-        val stop = URLEncoder.encode(poi.address, "UTF-8")
+        val waypointsStr = stops.joinToString("|") { poi ->
+            URLEncoder.encode(poi.address.ifEmpty { "${poi.lat},${poi.lng}" }, "UTF-8")
+        }
         val dest = URLEncoder.encode(destinationName ?: "", "UTF-8")
         val mode = when (travelMode) {
             "WALK" -> "walking"
             "BICYCLE" -> "bicycling"
             else -> "driving"
         }
-        AnalyticsService.track("navigation_opened", mapOf("app" to "Google Maps"))
-        recordVisit(poi)
-        val url = "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$dest&waypoints=$stop&travelmode=$mode"
+        AnalyticsService.track("navigation_opened", mapOf("app" to "Google Maps", "stopCount" to stops.size))
+        stops.forEach { recordVisit(it) }
+        val url = "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$dest&waypoints=$waypointsStr&travelmode=$mode"
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         context.startActivity(intent)
+    }
+
+    fun openGoogleMaps(
+        context: Context,
+        poi: POIResult,
+        originName: String?,
+        destinationName: String?,
+        travelMode: String = "DRIVE"
+    ) {
+        openGoogleMaps(context, listOf(poi), originName, destinationName, travelMode)
     }
 
     fun openWaze(context: Context, poi: POIResult) {

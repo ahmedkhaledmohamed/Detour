@@ -50,6 +50,7 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
     var additionalQueries by mutableStateOf<List<String>>(emptyList())
     var stopResults by mutableStateOf<List<StopResults>>(emptyList())
         private set
+    var selectedStops by mutableStateOf<List<POIResult>>(emptyList())
     var selectedCategory by mutableStateOf<Category?>(Category.COFFEE)
     var timeBudgetMode by mutableStateOf(false)
     var maxDetourMinutes by mutableStateOf(15f)
@@ -336,14 +337,29 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selectPOI(poi: POIResult) {
-        selectedPOI = poi
         AnalyticsService.track("poi_selected", mapOf(
             "detourSeconds" to poi.detourSeconds,
             "rating" to poi.rating,
         ))
+
+        if (additionalQueries.isNotEmpty()) {
+            val existing = selectedStops.indexOfFirst { it.placeId == poi.placeId }
+            selectedStops = if (existing >= 0) {
+                selectedStops.toMutableList().apply { removeAt(existing) }
+            } else {
+                selectedStops + poi
+            }
+            selectedPOI = selectedStops.lastOrNull()
+            computeMultiStopRoute()
+        } else {
+            selectedPOI = poi
+            computeSingleDetourRoute(poi)
+        }
+    }
+
+    private fun computeSingleDetourRoute(poi: POIResult) {
         val origin = originLatLng ?: return
         val destination = destinationLatLng ?: return
-
         viewModelScope.launch {
             val detour = directionsService.getDetourRoute(origin, poi.latLng, destination, travelMode.apiValue)
             if (detour != null) {
@@ -352,8 +368,35 @@ class RouteViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun computeMultiStopRoute() {
+        val origin = originLatLng ?: return
+        val destination = destinationLatLng ?: return
+        if (selectedStops.isEmpty()) {
+            detourRoutePoints = emptyList()
+            return
+        }
+
+        val waypoints = selectedStops.map { it.latLng }
+        val allPoints = listOf(origin) + waypoints + listOf(destination)
+
+        viewModelScope.launch {
+            val allSegments = mutableListOf<LatLng>()
+            for (i in 0 until allPoints.size - 1) {
+                val segment = directionsService.getDetourRoute(
+                    allPoints[i], allPoints[i + 1],
+                    allPoints[i + 1], travelMode.apiValue
+                )
+                if (segment != null) {
+                    allSegments.addAll(segment.points)
+                }
+            }
+            detourRoutePoints = allSegments
+        }
+    }
+
     fun clearDetour() {
         selectedPOI = null
+        selectedStops = emptyList()
         detourRoutePoints = emptyList()
     }
 
